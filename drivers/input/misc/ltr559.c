@@ -328,7 +328,7 @@ static struct sensors_classdev sensors_proximity_cdev = {
 
 #define LTR_I2C_RETRY_COUNT 3
 
-static s32 ltr559_sensor_I2C_Wrtie(const struct i2c_client *client, u8 command, u8 value)
+static s32 ltr559_sensor_I2C_Write(const struct i2c_client *client, u8 command, u8 value)
 {
 	int ret = 0;
 	int retry;
@@ -403,9 +403,9 @@ static int ltr559_chip_reset(struct i2c_client *client)
 {
 	int ret;
 
-	ret = ltr559_sensor_I2C_Wrtie(client, LTR559_ALS_CONTR, MODE_ALS_StdBy);
-	ret = ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, MODE_PS_StdBy);
-	ret = ltr559_sensor_I2C_Wrtie(client, LTR559_ALS_CONTR, 0x02);
+	ret = ltr559_sensor_I2C_Write(client, LTR559_ALS_CONTR, MODE_ALS_StdBy);
+	ret = ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, MODE_PS_StdBy);
+	ret = ltr559_sensor_I2C_Write(client, LTR559_ALS_CONTR, 0x02);
 	if (ret < 0)
 		printk("%s reset chip fail\n", __func__);
 
@@ -419,12 +419,12 @@ static void ltr559_set_ps_threshold(struct i2c_client *client, u8 addr, u16 valu
 {
 	int ret = 0;
 
-	ret = ltr559_sensor_I2C_Wrtie(client, addr, (value & 0xff));
+	ret = ltr559_sensor_I2C_Write(client, addr, (value & 0xff));
 	if (ret < 0) {
 		pr_err("%s: i2c write fail L, value =(%d) failed!\n", __func__, value);
 		return;
 	}
-	ret = ltr559_sensor_I2C_Wrtie(client, addr+1, (value >> 8));
+	ret = ltr559_sensor_I2C_Write(client, addr+1, (value >> 8));
 	if (ret < 0) {
 		pr_err("%s: i2c write fail H, value =(%d) failed!\n", __func__, value);
 		return;
@@ -446,7 +446,7 @@ static int ltr559_ps_enable(struct i2c_client *client, int on)
 			data->platform_data->prox_hsyteresis_threshold = 900;
 		}
 		#endif
-		ret = ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
+		ret = ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
 		msleep(WAKEUP_DELAY);
 
 		if (ret < 0) {
@@ -482,7 +482,7 @@ static int ltr559_ps_enable(struct i2c_client *client, int on)
 		ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, 0x7ff);
 
 
-		ret = ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, MODE_PS_StdBy);
+		ret = ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, MODE_PS_StdBy);
 		if (ret < 0) {
 			pr_err("%s: enable=(%d) failed!\n", __func__, on);
 			return ret;
@@ -512,7 +512,7 @@ static int ltr559_als_enable(struct i2c_client *client, int on)
 	int ret;
 
 	if (on) {
-		ret = ltr559_sensor_I2C_Wrtie(client, LTR559_ALS_CONTR, reg_tbl[REG_ALS_CONTR].curval);
+		ret = ltr559_sensor_I2C_Write(client, LTR559_ALS_CONTR, reg_tbl[REG_ALS_CONTR].curval);
 		msleep(WAKEUP_DELAY);
 		ret |= ltr559_sensor_I2C_Read(client, LTR559_ALS_DATA_CH0_1);
 
@@ -521,7 +521,7 @@ static int ltr559_als_enable(struct i2c_client *client, int on)
 
 	} else {
 		cancel_delayed_work_sync(&data->als_work);
-		ret = ltr559_sensor_I2C_Wrtie(client, LTR559_ALS_CONTR, MODE_ALS_StdBy);
+		ret = ltr559_sensor_I2C_Write(client, LTR559_ALS_CONTR, MODE_ALS_StdBy);
 	}
 	pr_err("%s: enable=(%d) ret=%d\n", __func__, on, ret);
 	return ret;
@@ -782,7 +782,7 @@ static int ltr559_gpio_irq(struct ltr559_data *data)
 		struct device_node *np = data->client->dev.of_node;
 	 int err = 0;
 
-		data->platform_data->int_gpio = of_get_named_gpio_flags(np, "ltr, irq-gpio", 0, &data->platform_data->irq_gpio_flags);
+		data->platform_data->int_gpio = of_get_named_gpio_flags(np, "ltr,irq-gpio", 0, &data->platform_data->irq_gpio_flags);
 		if (data->platform_data->int_gpio < 0)
 			return -EIO;
 
@@ -933,7 +933,7 @@ static ssize_t ltr559_store_debug_regs(struct device *dev,
 
 	mutex_lock(&data->lockw);
 	if (direct == '=')
-		ltr559_sensor_I2C_Wrtie(client, addr, val);
+		ltr559_sensor_I2C_Write(client, addr, val);
 	else
 		printk("%s: register(0x%02x) is: 0x%02x\n", __func__, addr, ltr559_sensor_I2C_Read(client, addr));
 	mutex_unlock(&data->lockw);
@@ -1076,7 +1076,7 @@ static ssize_t ltr559_ps_dynamic_caliberate_init(struct i2c_client *client, stru
 
 	ltr559_set_ps_threshold(client, LTR559_PS_THRES_LOW_0, 0x0);
 	ltr559_set_ps_threshold(client, LTR559_PS_THRES_UP_0, 0x7ff);
-	ret = ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
+	ret = ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, reg_tbl[REG_PS_CONTR].curval);
 
 	if (ret < 0) {
 		pr_err("%s:ps enable failed!\n", __func__);
@@ -1087,7 +1087,7 @@ static ssize_t ltr559_ps_dynamic_caliberate_init(struct i2c_client *client, stru
 	contr_data = ltr559_sensor_I2C_Read(client, LTR559_PS_CONTR);
 	if (contr_data != reg_tbl[REG_PS_CONTR].curval) {
 
-		ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, MODE_PS_StdBy);
+		ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, MODE_PS_StdBy);
 
 		pr_err("%s: ps status check failed!\n", __func__);
 		return -EFAULT;
@@ -1156,7 +1156,7 @@ static ssize_t ltr559_ps_dynamic_caliberate_init(struct i2c_client *client, stru
 
 	printk("%s : noise = %d , thd_val_low = %d , htd_val_high = %d \n", __func__, noise, pdata->prox_hsyteresis_threshold, pdata->prox_threshold);
 
-	ret = ltr559_sensor_I2C_Wrtie(client, LTR559_PS_CONTR, MODE_PS_StdBy);
+	ret = ltr559_sensor_I2C_Write(client, LTR559_PS_CONTR, MODE_PS_StdBy);
 	if (ret < 0) {
 		pr_err("%s: disable failed!\n", __func__);
 		return ret;
@@ -1351,7 +1351,7 @@ int ltr559_device_init(struct i2c_client *client)
 	int retval = 0;
 	int i;
 
-	retval = ltr559_sensor_I2C_Wrtie(client, LTR559_ALS_CONTR, 0x02);
+	retval = ltr559_sensor_I2C_Write(client, LTR559_ALS_CONTR, 0x02);
 	if (retval < 0) {
 		pr_err("%s   i2c_smbus_write_byte_data(LTR559_ALS_CONTR, 0x02);  ERROR !!!.\n", __func__);
 	}
@@ -1363,13 +1363,13 @@ int ltr559_device_init(struct i2c_client *client)
 		}
 		if (reg_tbl[i].defval != reg_tbl[i].curval) {
 			if (i < 10) {
-				retval = ltr559_sensor_I2C_Wrtie(client, reg_tbl[i].addr, reg_tbl[i].curval);
+				retval = ltr559_sensor_I2C_Write(client, reg_tbl[i].addr, reg_tbl[i].curval);
 				pr_info("___CAOYI____  ltr559  write 0x%x to addr:0x%x\n", reg_tbl[i].curval, reg_tbl[i].addr);
-				pr_info("___CAOYI____ write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Wrtie(client, reg_tbl[i].addr, reg_tbl[i].curval));
+				pr_info("___CAOYI____ write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Write(client, reg_tbl[i].addr, reg_tbl[i].curval));
 			} else {
-				retval = ltr559_sensor_I2C_Wrtie(client, reg_tbl[i].addr, reg_tbl[i].curval & 0xff);
+				retval = ltr559_sensor_I2C_Write(client, reg_tbl[i].addr, reg_tbl[i].curval & 0xff);
 				pr_info("___CAOYI____  ltr559  write 0x%x to addr:0x%x\n", reg_tbl[i].curval & 0xff, reg_tbl[i].addr);
-				retval = ltr559_sensor_I2C_Wrtie(client, reg_tbl[i].addr + 1, reg_tbl[i].curval >> 8);
+				retval = ltr559_sensor_I2C_Write(client, reg_tbl[i].addr + 1, reg_tbl[i].curval >> 8);
 				pr_info("___CAOYI____  ltr559  write 0x%x to addr:0x%x\n", reg_tbl[i].curval >> 8, reg_tbl[i].addr);
 			}
 		}
@@ -1380,8 +1380,8 @@ int ltr559_device_init(struct i2c_client *client)
 
 
 	pr_info("___CAOYI______||||   read is OK(+x) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Read(client, 0x1a));
-	pr_info("___CAOYI______||||  write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Wrtie(client, 0x1b, 0x88));
-	pr_info("___CAOYI______||||  write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Wrtie(client, 0x11, 0x88));
+	pr_info("___CAOYI______||||  write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Write(client, 0x1b, 0x88));
+	pr_info("___CAOYI______||||  write is OK(0) or Error (-x) ? = return is %d\n", ltr559_sensor_I2C_Write(client, 0x11, 0x88));
 
 	return retval;
 }
@@ -1579,21 +1579,21 @@ static int ltr559_parse_dt(struct device *dev, struct ltr559_data *data)
 	int rc = 0;
 
 	/* ps tuning data*/
-	rc = of_property_read_u32(np, "ltr, ps-threshold", &tmp);
+	rc = of_property_read_u32(np, "ltr,ps-threshold", &tmp);
 	if (rc) {
 		dev_err(dev, "Unable to read ps threshold\n");
 		return rc;
 	}
 	pdata->prox_threshold = tmp;
 
-	rc = of_property_read_u32(np, "ltr, ps-hysteresis-threshold", &tmp);
+	rc = of_property_read_u32(np, "ltr,ps-hysteresis-threshold", &tmp);
 	 if (rc) {
 		dev_err(dev, "Unable to read ps hysteresis threshold\n");
 		return rc;
 	}
 	pdata->prox_hsyteresis_threshold = tmp;
 
-	rc = of_property_read_u32(np, "ltr, als-polling-time", &tmp);
+	rc = of_property_read_u32(np, "ltr,als-polling-time", &tmp);
 	 if (rc) {
 		dev_err(dev, "Unable to read ps hysteresis threshold\n");
 		return rc;
@@ -1897,7 +1897,7 @@ static struct i2c_device_id ltr559_id[] = {
 };
 
 static struct of_device_id ltr_match_table[] = {
-	{.compatible = "ltr, ltr559",},
+	{.compatible = "ltr,ltr559",},
 	{},
 };
 
