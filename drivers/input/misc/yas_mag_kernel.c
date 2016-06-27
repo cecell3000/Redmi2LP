@@ -118,7 +118,7 @@ struct yas_state {
 
 #if CTS_TEST
 	struct hrtimer  poll_timer;
-	int64_t		 delay[MAG_NUM_SENSORS];
+	int64_t delay[MAG_NUM_SENSORS];
 	int use_hrtimer;
 #endif
 
@@ -613,7 +613,7 @@ static void yas_work_func(struct work_struct *work)
 	if (poll_delay <= 0)
 		poll_delay = 1;
 
- st->delay[MAG_DATA_FLAG] = poll_delay * 1000000;
+	st->delay[MAG_DATA_FLAG] = poll_delay * 1000000;
 
 	if (!st->use_hrtimer) {
 		schedule_delayed_work(&st->work, msecs_to_jiffies(poll_delay));
@@ -861,7 +861,7 @@ static int sensor_parse_dt(struct device *dev,
 	pdata->exit = sensor_platform_hw_exit;
 	pdata->power_on = sensor_platform_hw_power_on;
 
-	rc = of_property_read_u32(np, "yas, position",
+	rc = of_property_read_u32(np, "yas,position",
 							  &temp_val);
 	if (rc && (rc != -EINVAL)) {
 		dev_err(dev, "Unable to read fw delay read id\n");
@@ -1137,14 +1137,14 @@ static int yas_suspend(struct device *dev)
 	struct yas537_platform_data *pdata;
 	pdata = pdev_data->platform_data;
 	if (atomic_read(&pdev_data->enable)) {
-	 #if CTS_TEST
+		#if CTS_TEST
 		if (pdev_data->use_hrtimer) {
 			hrtimer_cancel(&pdev_data->poll_timer);
 		} else {
 			cancel_delayed_work_sync(&pdev_data->work);
 		}
 
-	#endif
+		#endif
 
 
 		pdev_data->mag.set_enable(0);
@@ -1172,7 +1172,7 @@ static int yas_resume(struct device *dev)
 			schedule_delayed_work(&pdev_data->work, 0);
 		}
 
-	#endif
+		#endif
 
 	}
 
@@ -1195,7 +1195,7 @@ MODULE_DEVICE_TABLE(i2c, yas_id);
 
 
 static struct of_device_id yas_match_table[] = {
-	{.compatible = "yamaha, yas537",},
+	{ .compatible = "yamaha,yas537", },
 	{},
 };
 
